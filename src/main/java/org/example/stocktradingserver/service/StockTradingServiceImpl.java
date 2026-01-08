@@ -3,6 +3,7 @@ package org.example.stocktradingserver.service;
 import com.example.grpc.StockRequest;
 import com.example.grpc.StockResponse;
 import com.example.grpc.StockTradingServiceInterfaceGrpc;
+import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import org.example.stocktradingserver.entity.Stock;
 import org.example.stocktradingserver.repository.StockRepository;
@@ -38,7 +39,7 @@ public class StockTradingServiceImpl extends StockTradingServiceInterfaceGrpc.St
     }
 
     @Override
-    public void subscribeStockPrice(StockRequest request, StreamObserver<StockResponse> responseObserver) {
+    public void subscribeStockPrice(Empty request, StreamObserver<StockResponse> responseObserver) {
         List<Stock> stocks = stockRepository.findAll();
         stocks.forEach(stock -> {
             try {
