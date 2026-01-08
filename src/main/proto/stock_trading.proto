@@ -17,6 +17,7 @@ service StockTradingServiceInterface {
   rpc getStockPrice (StockRequest) returns (StockResponse);
 
   // SERVER STREAMING
+  rpc subscribeStockPrice(StockRequest) returns (stream StockResponse);
 
   // CLIENT STREAMING
 

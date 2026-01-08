@@ -9,6 +9,8 @@ import org.example.stocktradingserver.repository.StockRepository;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @GrpcService //so this class will be exposed as a gRPC service by gRPC server
 public class StockTradingServiceImpl extends StockTradingServiceInterfaceGrpc.StockTradingServiceInterfaceImplBase {
@@ -33,14 +35,24 @@ public class StockTradingServiceImpl extends StockTradingServiceInterfaceGrpc.St
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
-//        List<Stock> stocks = stockRepository.findAllBySymbol(request.getStockSymbol());
-//        stocks.stream().map(
-//                stock -> StockResponse.newBuilder()
-//                        .setStockSymbol(stock.getSymbol())
-//                        .setPrice(stock.getPrice().doubleValue())
-//                        .setTimestamp(stock.getLastUpdated().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-//                        .build()
-//        ).forEach(responseObserver::onNext);
+    }
 
+    @Override
+    public void subscribeStockPrice(StockRequest request, StreamObserver<StockResponse> responseObserver) {
+        List<Stock> stocks = stockRepository.findAll();
+        stocks.forEach(stock -> {
+            try {
+                StockResponse response = StockResponse.newBuilder()
+                        .setStockSymbol(stock.getSymbol())
+                        .setPrice(stock.getPrice().doubleValue())
+                        .setTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd").format(stock.getLastUpdated()))
+                        .build();
+
+                responseObserver.onNext(response);
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                responseObserver.onError(e);
+            }
+        });
     }
 }
