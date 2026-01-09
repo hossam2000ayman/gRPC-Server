@@ -8,6 +8,7 @@ import org.example.stocktradingserver.repository.StockRepository;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
@@ -96,6 +97,47 @@ public class StockTradingServiceImpl extends StockTradingServiceInterfaceGrpc.St
 
                 //how to send summary response back to client
                 responseObserver.onNext(summary);
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
+    @Override
+    public StreamObserver<StockOrder> liveTrading(StreamObserver<TradeStatus> responseObserver) {
+        // 1- I will take stock orders from client asynchronously
+        // 2- then I will send trade status back to client asynchronously
+
+        return new StreamObserver<StockOrder>() {
+            @Override
+            public void onNext(StockOrder stockOrder) {
+                //do some processing with received stock order
+                System.out.println("Received order for stock: " + stockOrder);
+
+                //then prepare trade status response
+                String status = "EXECUTED";
+                String message = "Order placed successfully";
+                if (stockOrder.getQuantity() <= 0) {
+                    status = "FAILED";
+                    message = "Invalid quantity";
+                }
+                TradeStatus tradeStatus = TradeStatus.newBuilder()
+                        .setOrderId(stockOrder.getOrderId())
+                        .setMessage(message)
+                        .setStatus(status)
+                        .setTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now()))
+                        .build();
+
+                //return this response back to client
+                responseObserver.onNext(tradeStatus);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("Error receiving stock order: " + throwable.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
                 responseObserver.onCompleted();
             }
         };
